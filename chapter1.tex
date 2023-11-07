@@ -1,0 +1,73 @@
+% CHAPITRE 1
+\chapter{Compter le nombre de voyelles}
+\vspace{2cm}
+\section{Énoncé}
+\medskip
+
+Ce premier challenge est très simple, il est de niveau \og débutant\fg{}, mais si vous avez plus d'expérience, vous pouvez essayer de trouver de belles astuces pour un code propre, rapide et concis.
+\medskip
+
+Ici, il va nous falloir créer une fonction \verb|nb_voyelles(phrase: str)->int| qui retourne le résultat du nombre total de voyelles dans une phrase passée en paramètre.
+\medskip
+
+\subsection*{Conditions}
+\begin{itemize}
+	\item[-] Les voyelles sont : \texttt{aeiou}, \texttt{y} n’est pas pris en compte.
+	\item[-] Les voyelles accentuées ne sont pas prises en compte.
+	\item[-] La phrase passée en paramètre doit être écrite en minuscule.
+	\item[-] Une chaîne vide, passée en paramètre, doit renvoyer \texttt{0}.
+\end{itemize}
+\medskip
+
+\subsection*{Exemples}
+\begin{itemize}
+	\item[\textbullet] \verb|nb_voyelles("bonjour, comment allez-vous ?")| doit retourner \texttt{9}.
+	\item[\textbullet] \verb|nb_voyelles("je vais à paris")| doit retourner \texttt{5}.
+	\item[\textbullet] \verb|nb_voyelles("docstring")| doit retournet \texttt{2}.
+	\item[\textbullet] \verb|nb_voyelles("")| doit retourner \texttt{0}.
+\end{itemize}
+\medskip
+
+\section{Solution et explications}
+\medskip
+
+Voici donc ma solution\footnote{Fil de discussion de ce challenge: \url{https://discord.com/channels/396825382009044994/1142617945139335189}} :
+\begin{lstlisting}
+def nb_voyelles(phrase: str)->int:
+	return sum(phrase.count(el) for el in "aeiou")
+\end{lstlisting}
+\medskip
+
+\begin{itemize}
+	\item[\textbullet] La phrase doit toujours être en minuscule, donc pas besoin de la méthode \texttt{lower()}.
+	\item[\textbullet] Ici, on compte chaque voyelle dans la phrase à l'aide de la méthode \texttt{count}.
+	\item[\textbullet] La fonction \texttt{sum()} renvoie ensuite la somme du résultat obtenu.
+	\item[\textbullet] Si l'on passe un générateur ou une liste de compréhension dans la fonction \texttt{sum()}, la paire de crochets supplémentaire peut-être éliminée\footnote{ Attention, car cela n'est par contre pas compatible avec la fonction \texttt{len()}. Pour plus d'information on se reportera au \texttt{PEP-289}: \url{https://peps.python.org/pep-0289/\#the-details}.}. De cette manière :
+	\begin{verbatim}
+	sum([phrase.count(el) for el in "aeiou"])
+	\end{verbatim}
+	est l'équivalent de :
+	\begin{verbatim}
+	sum(phrase.count(el) for el in "aeiou")
+	\end{verbatim}
+\end{itemize}
+\medskip
+
+Voici aussi le code pour mes tests unitaires :
+\begin{lstlisting}
+import pytest
+
+@pytest.mark.parametrize("sentence, expected", [
+    ("", 0),
+    ("docstring", 2),
+    ("bonjour comment allez-vous ?", 9),
+    ("je vais à paris", 5),
+    ("vas-y !", 1),
+]) 
+def test_should_return_the_sum(sentence, expected):
+    got = nb_voyelles(sentence)
+    assert got == expected
+\end{lstlisting}
+\medskip
+
+\texttt{@OsKaR31415} a par ailleurs apporté plusieurs solutions pour résoudre ce challenge\footnote{\url{https://discord.com/channels/396825382009044994/1142617945139335189/1144591818516860998}}.

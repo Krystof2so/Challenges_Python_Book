@@ -22,12 +22,20 @@
 % Package à placer en dernier
 \usepackage{hyperref}
 
+% PARAMETRAGE DES URL FIGURANT DANS LE DOCUMENT PDF
+\hypersetup{
+    colorlinks=true, % Couleur les liens au lieu de les encadrer
+    linkcolor=link_table_of_contents,  % Couleur des liens internes (table des matières, références, etc.)
+    urlcolor=pythonblue,   % Couleur des liens URL
+}
+
 % DEFINITION DES COULEURS
 \definecolor{backcolour}{rgb}{0.95,0.95,0.92}
 \definecolor{codegreen}{rgb}{0,0.6,0}
 \definecolor{pythonblue}{RGB}{54,117,171}
 \definecolor{pythonyellow}{RGB}{220,176,30}
 \definecolor{graylight}{RGB}{231,231,231}
+\definecolor{link_table_of_contents}{RGB}{65,0,0}
 
 % PERSONNALISER LES TITRES DES CHAPITRES
 \titleformat{\chapter}[frame]
@@ -52,7 +60,7 @@
     aboveskip=5mm,  % Marge avant l'insertion du code
     belowskip=5mm,  % Marge après l'insertion du code
     backgroundcolor=\color{backcolour},
-    keywordstyle=\color{red}, % Couleur mots clés
+    keywordstyle=\color{purple}, % Couleur mots clés
     commentstyle=\color{olive}, % Coleur commentaires  
     stringstyle=\color{codegreen},  % Style des strings
     basicstyle=\small, % Taille police
@@ -65,8 +73,9 @@
     showtabs=false,  % Voir les tabulations               
     tabsize=4,  % Tabulations
     frame=tb,  % Cadre en haut et en bas
-    rulecolor=\color{gray},  % Couleur du cadre 
+    rulecolor=\color{pythonblue},  % Couleur du cadre 
     captionpos=b,  % Position de la légende du code
+    morekeywords={assert},
     literate= % Pour une gestion de l'utf8
         {â}{{\^a}}1 {à}{{\`a}}1 {ç}{{\c c}}1 {é}{{\'e}}1
         {è}{{\`e}}1 {ê}{{\^e}}1 {î}{{\^i}}1 {ô}{{\^o}}1
@@ -114,34 +123,6 @@
 \chapter*{Avant propos}
 \lipsum[1-3]
 
-% CHAPITRE 1
-\chapter{Compter le nombre de voyelles}
-\vspace{2cm}
-\section{Énoncé}
-\medskip
-
-Ce premier challenge est très simple, il est de niveau \og débutant\fg{}, mais si vous avez plus d'expérience, vous pouvez essayer de trouver de belles astuces pour un code propre, rapide et concis.
-\medskip
-
-Ici, il va nous falloir créer une fonction \verb|nb_voyelles(phrase: str)->int| qui retourne le résultat du nombre total de voyelles dans une phrase passée en paramètre.
-\medskip
-
-\subsection*{Conditions}
-\begin{itemize}
-	\item[-] Les voyelles sont : \texttt{aeiou}, \texttt{y} n’est pas pris en compte.
-	\item[-] Les voyelles accentuées ne sont pas prises en compte.
-	\item[-] La phrase passée en paramètre doit être écrite en minuscule.
-	\item[-] Une chaîne vide, passée en paramètre, doit renvoyer \texttt{0}.
-\end{itemize}
-\medskip
-
-\subsection*{Exemples}
-\begin{itemize}
-	\item[\textbullet] \verb|nb_voyelles("bonjour, comment allez-vous ?")| doit retourner \texttt{9}.
-	\item[\textbullet] \verb|nb_voyelles("je vais à paris")| doit retourner \texttt{5}.
-	\item[\textbullet] \verb|nb_voyelles("docstring")| doit retournet \texttt{2}.
-	\item[\textbullet] \verb|nb_voyelles("")| doit retourner \texttt{0}.
-\end{itemize}
-\medskip
+\include{chapter1}
 
 \end{document}
