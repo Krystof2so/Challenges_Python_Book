@@ -1,0 +1,107 @@
+\chapter{Jeu du \og Pierre - Papier - Ciseaux\fg{}}
+\vspace{2cm}
+\section{Énoncé}
+\medskip
+
+On va jouer un peu en développant un petit jeu très simple.
+\medskip
+
+Le but du challenge est de développer le célèbre jeu \og \textit{pierre - papier - ciseaux}\fg{}\footnote{\url{https://fr.wikipedia.org/wiki/Pierre-papier-ciseaux}} en essayant de trouver un algorithme astucieux et un code à la fois simple, propre et efficace.
+\medskip
+
+\subsection*{Étapes}
+\begin{enumerate}
+	\item Générer un choix aléatoire pour votre session de jeu : \og pierre\fg{}, \og papier\fg{} ou \og ciseaux\fg{}.
+	\item Demander au joueur d'écrire son choix entre trois propositions : \og pierre\fg{}, \og papier\fg{} ou \og ciseaux\fg{}.
+	\item Afficher qui a gagné en dévoilant le choix aléatoire du point n°1.
+\end{enumerate}
+\medskip
+
+\subsubsection*{Conditions}
+\begin{itemize}
+	\item[-] L'affichage, le prompt et la réponse seront affichées par écrit sur  la console.
+	\item[-] Le fonctionnement du jeu est simple : la pierre gagne sur les ciseaux, les ciseaux gagnent sur le papier, le papier gagne sur la pierre, deux éléments identiques correspondent à une égalité.
+	\item[-] Toutes les chaînes de caractères, \og pierre\fg{}, \og papier\fg{} et \og ciseaux\fg{} doivent toujours être entrées en minuscule, le joueur devra donc écrire correctement ces mots, sinon vous devrez lui demander de redéfinir son choix.
+	\item[-] S'il y a égalité, vous devrez relancer automatiquement votre programme (en regénérant un nouveau choix aléatoire pour la nouvelle session de jeu), jusqu'à ce qu'il y ait un gagnant à la partie.
+\end{itemize}
+\medskip
+
+\subsection*{Exemples}
+\begin{itemize}
+	\item[-] Le choix aléatoire donne \og pierre\fg{} et le joueur a choisi \og papier\fg{} -> \texttt{Vous avez gagné ! Le papier enveloppe la pierre}
+	\item[-] Le choix aléatoire donne \og ciseaux\fg{} et le joueur a choisi \og papier\fg{} -> \texttt{Vous avez perdu ! Les ciseaux coupent le papier}
+	\item[-] Le choix aléatoire donne \og pierre\fg{} et le joueur a choisi \og pierre\fg{} -> \texttt{Égalité ! Recommencez...}
+\end{itemize}
+\medskip
+
+\section{Ma solution}
+\begin{lstlisting}
+from random import randint
+
+BDD = {
+    "element": ["papier", "pierre", "ciseaux"],
+    "gagnant": ["10", "21", "02"],
+    "phrase": ["Le papier enveloppe la pierre",
+               "Les ciseaux coupent le papier",
+               "La pierre casse les ciseaux"]
+}
+
+while True:
+    joueur = input("pierre, papier ou ciseaux: ")
+    if joueur in BDD["element"]:
+        choix, joueur = (randint(0, 2),
+                         BDD["element"].index(joueur))
+
+        if choix != joueur: break
+        print("Égalité, recommencez...")
+
+    else: print("Faute de frappe !")
+
+print(f'Vous avez {"gagné" if f"{choix}{joueur}" in BDD["g
+agnant"] else "perdu"} ! {BDD["phrase"][choix + joueur - 1]
+} !')
+\end{lstlisting}
+\medskip
+
+\section{Explication de l'algorithme}
+\subsection*{Contexte}
+\begin{itemize}
+	\item[-] Trois éléments : \og pierre\fg{}, \og papier\fg{} ou \og ciseaux\fg{}.
+	\item[-] Un choix aléatoire fait par la machine et un joueur qui entre son choix au clavier.
+\end{itemize}
+\medskip
+
+Il suffit donc de réfléchir à un algorithme sympathique pour présenter le code de manière élégante et éviter bien sûr les répétitions.
+\medskip
+
+\subsection*{Rangement des données}
+Chaque élément est rangé dans cet ordre particulier dans la liste, afin de les faire correspondre en triade logique.
+\begin{itemize}
+	\item[\textbullet] papier = index(0)
+	\item[\textbullet] pierre = index(1)
+	\item[\textbullet] ciseaux = index(2)
+\end{itemize}
+\medskip
+
+\subsection*{Algorithme pour un choix triangulaire}
+Si on fait l'addition \texttt{0+1}, on obtient \texttt{1}, alors le jeu se fait entre \og papier\fg{} et \og pierre\fg{}. On cherche ensuite la phrase dans \texttt{phrase} en faisant juste un calcul grâce à la somme \texttt{-1} des deux éléments. Donc en index:  \texttt{1-0 = 0}, et on trouve donc la chaîne de caractères \texttt{"Le papier enveloppe la pierre"}.
+\medskip
+
+Si on fait l'addition \texttt{1+2}, on obtient \texttt{3}, alors le jeu se fait entre la \og pierre\fg{} et les \og ciseaux\fg{}. Donc en index, on obtient \texttt{3-1}, soit \texttt{2}. On trouve donc la chaîne de caractères \texttt{"La pierre casse les ciseaux"}.
+\medskip
+
+De la même façon, si on fait l'addition \texttt{2+0}, on obtient \texttt{2} et le jeu se fait entre les \og ciseaux\fg{} et le \og papier\fg{}. En index cela donne \texttt{2-1}, soit \texttt{1}, et on tombe sur la chaîne de caractères \texttt{"Les ciseaux coupent le papier"}.
+\medskip
+
+\subsection*{\textit{The Winner is...}}
+Pour connaître qui gagne, il suffit de convertir en \textit{string} et de joindre les deux caractères d'index du choix et du joueur. Ainsi, \texttt{10} dans \texttt{gagnant} veut dire que le choix aléatoire donne la \og pierre\fg{} (index \texttt{1}) et que le joueur a saisi le \og papier\fg{} (index \texttt{0}). La \og pierre\fg{} contre le \og papier\fg{} fait donc gagner le joueur.
+\medskip
+
+On affiche ainsi \texttt{"gagné"} puis la phrase qui suit s'obtient grâce à l'index de la liste \texttt{phrase} de la \texttt{BDD}, calculée par l'addition des deux index: \texttt{1+(0-1)}, ce qui nous donne \texttt{0}, ce qui correspond à la chaîne de caractères \texttt{"Le papier enveloppe la pierre"}.
+\medskip
+
+De la même façon pour \texttt{21} et \texttt{02}, cela représente la combinatoire complète des choix gagnants pour le joueur par rapport au choix aléatoire.
+\medskip
+
+\subsection*{Conclusion}
+On utilise le calcul de la somme \texttt{-1} qui renvoie un objet de type \texttt{int} et qui pemret l'association des deux chaînes de caractères (\textit{string}) pour connaître le gagnant.
