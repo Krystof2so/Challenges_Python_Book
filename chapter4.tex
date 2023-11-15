@@ -1,0 +1,299 @@
+\chapter{Calculatrice romaine}
+\vspace{2cm}
+\section{Énoncé}
+Le but de ce challenge est de développer la fonction:
+\begin{verbatim}
+add_romans(calculate:str)->str
+\end{verbatim}
+...qui permet de calculer la somme de deux ou plusieurs nombres écrits en chiffres romains\footnote{\url{https://fr.wikipedia.org/wiki/Num\%C3\%A9ration_romaine)}}.
+
+\subsection*{Conditions}
+\begin{itemize}
+	\item[-] L'affichage du prompt se fera via la console.
+	\item[-] L'opération est simple : deux ou plusieurs nombres écrits sur une seule ligne en chiffres romains séparés par un signe \texttt{+}.
+	\item[-] Le résultat de l'opération sera bien sûr donné en chiffres romains dans une plage comprise entre \texttt{I} et \texttt{MMMCMXCIX}.
+	\item[-] Vérifier que les chiffres romains et l'opération entrés par l'utilisateur sont valides. Les lettres doivent toujours êtres écrites en majuscules.
+	\item[-] Les chiffres romains sont : \texttt{IVXLCDM}.
+	\item[-] \texttt{I}, \texttt{X} et \texttt{C} ne peuvent pas être répétés plus de trois fois.
+	\item[-] \texttt{V}, \texttt{L} et \texttt{D} ne peuvent pas apparaître plus d'une fois.
+\end{itemize}
+\medskip
+
+\subsection*{Exemples}
+\begin{verbatim}
+- X + IV -> XIV
+- MXCIX + CIV -> MCCIII
+- II + II -> IV
+- MMMCX + DCII -> MMMDCCXII
+- MCMXCIX + I -> MM
+- IVM + I -> erreur (IVM n'est pas valide)
+- VVI -> erreur (2x V n'est pas valide)
+- XXXX -> erreur (4x X n'est pas valide)
+- TX -> erreur (T ne fait pas partie de la liste des chiffres romains)
+- XX - IV -> erreur (seule l'addition est permise)
+- IV -> erreur (2 éléments minimum) 
+- MMMCMXC + X -> erreur (débordement, doit respecter la plage de I à 
+MMMCMXCIX inclus)
+\end{verbatim}
+\medskip
+
+\subsection*{Ressource}
+Voir le site \texttt{Roman numerals calculator} pour réaliser des tests\footnote{\url{https://www.hackmath.net/en/calculator/roman-numerals}}.
+\medskip
+
+\section{Ma proposition}
+\begin{lstlisting}
+from re import search
+
+ROMANS = {"I": 1, "V": 5, "X": 10, "L": 50,
+          "C": 100, "D": 500, "M": 1000}
+SPEC = {4: ("IV", "XL", "CD"), 9: ("IX", "XC", "CM")}
+list_romans = list(ROMANS.keys())
+
+
+def to_dec(roman_nb: str) -> int:
+    nb = [ROMANS[el] for el in roman_nb]
+    return sum([nb[i] - 2 * nb[i - 1] if nb[i] > nb[i - 1]
+                else nb[i] for i in
+                range(1, len(nb))]) + nb[0]
+
+
+def n_to_9(nb: int, lv: int) -> str:
+    base, v = list_romans[lv * 2], list_romans[1:6:2][lv]
+    return f"{base * nb}" if nb < 4 else v if nb == 5 \
+        else SPEC[nb][lv] if nb in SPEC \
+        else f"{v}{base * (nb - 5)}"
+
+
+def to_roman(nb: int) -> str:
+    nb = [int(i) for i in reversed(str(nb))]
+    return "".join([f"{'M' * nb[3]}" if i == 3
+                    else n_to_9(nb[i], i) for i in
+                    range(0, len(nb))][::-1])
+
+
+def add_romans(calculate: str) -> str:
+    if [el for el in "-*/" if el in calculate]:
+        return "Seule l'addition est permise"
+
+    el_list = calculate.replace(" ", "").split("+")
+    if len(el_list) < 2:
+        return "2 éléments minimum"
+
+    calc = []
+    for el in el_list:
+        err = [lt for lt in el if lt not in ROMANS]
+        if err:
+            return (f"{err[0][0]} ne fait pas partie de "
+                    f"la liste des chiffres romains")
+
+        if search("IL|IC|ID|IM|XD|XM|VL|VC|VD|VM", el):
+            return f"{el} n'est pas valide"
+
+        err = search("V.*?V|L.*?L|D.*?D", el)
+        if err:
+            return f"2x {err[0][0]} n'est pas valide"
+
+        err = search(
+            rf'([{"".join(list_romans[0:5:2])}])\1{{3,}}',
+            el)
+        if err:
+            return f"4x {err[0][0]} n'est pas valide"
+
+        err = search(
+            rf'({"|".join(SPEC[4] + SPEC[9])}).*?\1', el)
+        if err:
+            return f"2x {err[0]} n'est pas valide"
+
+        calc.append(to_dec(el))
+    result = sum(calc)
+    return to_roman(result) if result < 4000 else \
+        ("Débordement, doit respecter la plage de I à "
+         "MMMCMXCIX inclus")
+
+
+if __name__ == '__main__':
+    print(add_romans(input("une opération : ")))
+\end{lstlisting}
+\medskip
+
+\subsection*{Mon fichier d'\textit{unitests}}
+\begin{lstlisting}
+import pytest
+
+@pytest.mark.parametrize("calculate, expected", [
+    ("X + IV", "XIV"),
+    ("MXCIX + CIV", "MCCIII"),
+    ("II + II", "IV"),
+    ("MMMCX + DCII", "MMMDCCXII"),
+    ("MCMXCIX + I", "MM"),
+    ("IVM + I", "IVM n'est pas valide"),
+    ("VVI + I", "2x V n'est pas valide"),
+    ("XXXX + I", "4x X n'est pas valide"),
+    ("TX + I", "T ne fait pas partie de la liste des "
+               "chiffres romains"),
+    ("XX - IV", "Seule l'addition est permise"),
+    ("IV", "2 éléments minimum"),
+    ("MMMCMXC + X", "Débordement, doit respecter la plage "
+                    "de I à MMMCMXCIX inclus"),
+])
+def test_should_return_the_sum_of_roman_numbers(calculate,
+                                                expected):
+    got = add_romans(calculate)
+
+    assert got == expected
+
+\end{lstlisting}
+\medskip
+
+\section{Explications}
+\subsection*{Contexte}
+Il s'agit de trouver un moyen pour additionner des chiffres romains entre eux.  Pour cela, il est préférable de rester dans un domaine de nombres arabes pour effectuer l'opération arithmétique puis reconvertir la sommes finales en chiffres romains.
+\medskip
+
+\subsection*{Les différentes problématiques}
+\begin{itemize}
+	\item[\textbullet] \textbf{Conversion chiffres romains en chiffres arabes :} Il faut trouver une astuce pour faire correspondre ces chiffres romains en chiffres arabes. La solution est dans cette phrase : \og \textit{Un nombre écrit en chiffres romains se lit de gauche à droite. En première approximation, sa valeur se détermine en faisant la somme des valeurs individuelles de chaque symbole, sauf quand l'un des symboles précède un symbole de valeur supérieure ; dans ce cas, on soustrait la valeur du premier symbole au deuxième}\fg{}\footnote{Source \texttt{Wikipédia}: \url{https://fr.wikipedia.org/wiki/Numération_romaine}}.
+	\item[\textbullet] \textbf{Conversion du résultat en chiffres romains :} Il y a plusieurs façons de faire, soit faire correspondre chaque symbole romain, soit reconstituer le nombre par dizaine, centaine et millier.
+	\item[\textbullet] \textbf{Gestion des erreurs :} Pour ce challenge, il s'agissait de simplement suivre la liste dans les exemples, car plusieurs écritures sont possible en fonction de la version romaine utilisée. Dans ce cas, faire un simple \texttt{return} du texte est accepté, sinon faire l'habituel \texttt{raise} pour \textit{lever l'erreur}.
+\end{itemize}
+\medskip
+
+\subsection*{Explication du code}
+Mon programme se divise donc en trois, voire en quatre parties :
+\medskip
+
+\subsubsection*{La conversion des chiffres romains en chiffres arabes}
+Avec la fonction :
+\begin{verbatim}
+to_dec(roman_nb:str)->int
+\end{verbatim}
+\medskip
+
+Ici, de simples additions tant qu'on ne rencontre pas de paires contenant un élément de valeur supérieur, auquel cas, il faudra réaliser une soustraction.
+La conversion s'opère principalement par ces lignes :
+\begin{lstlisting}
+def to_dec(roman_nb: str) -> int:
+    nb = [ROMANS[el] for el in roman_nb]
+    return sum([nb[i] - 2 * nb[i - 1] if nb[i] > nb[i - 1]
+                else nb[i] for i in
+                range(1, len(nb))]) + nb[0]
+\end{lstlisting}
+\medskip
+
+\subsubsection*{La conversion des chiffres arabes en chiffres romains} 
+Avec la fonction :
+\begin{verbatim}
+to_roman(nb:int)->str
+\end{verbatim}
+\medskip
+
+Là, c'est plus compliqué. Ici je décompose mon nombre en unité, dizaine, centaine et millier et m'occupe de chaque éléments un par un. Les éléments particulier 4, 5 et 9 sont traités dans une sous-fonction :
+\begin{lstlisting}
+def n_to_9(nb: int, lv: int) -> str:
+    base, v = list_romans[lv * 2], list_romans[1:6:2][lv]
+    return f"{base * nb}" if nb < 4 else v if nb == 5 \
+        else SPEC[nb][lv] if nb in SPEC \
+        else f"{v}{base * (nb - 5)}"
+\end{lstlisting}
+\medskip
+
+Le code de la fonction est le suivant :
+\begin{lstlisting}
+def to_roman(nb: int) -> str:
+    nb = [int(i) for i in reversed(str(nb))]
+    return "".join([f"{'M' * nb[3]}" if i == 3
+                    else n_to_9(nb[i], i) for i in
+                    range(0, len(nb))][::-1])
+\end{lstlisting}
+\medskip
+
+\subsubsection*{La fonction principale}
+\begin{verbatim}
+add_romans(calculate:str)->str
+\end{verbatim}
+\medskip
+
+Corps du programme dans lequel la gestion des erreurs se fait à l'aide principalement des \textit{expressions régulières} (\textit{regex}).
+\begin{lstlisting}
+def add_romans(calculate: str) -> str:
+    if [el for el in "-*/" if el in calculate]:
+        return "Seule l'addition est permise"
+
+    el_list = calculate.replace(" ", "").split("+")
+    if len(el_list) < 2:
+        return "2 éléments minimum"
+
+    calc = []
+    for el in el_list:
+        err = [lt for lt in el if lt not in ROMANS]
+        if err:
+            return (f"{err[0][0]} ne fait pas partie de "
+                    f"la liste des chiffres romains")
+
+        if search("IL|IC|ID|IM|XD|XM|VL|VC|VD|VM", el):
+            return f"{el} n'est pas valide"
+
+        err = search("V.*?V|L.*?L|D.*?D", el)
+        if err:
+            return f"2x {err[0][0]} n'est pas valide"
+
+        err = search(
+            rf'([{"".join(list_romans[0:5:2])}])\1{{3,}}',
+            el)
+        if err:
+            return f"4x {err[0][0]} n'est pas valide"
+
+        err = search(
+            rf'({"|".join(SPEC[4] + SPEC[9])}).*?\1', el)
+        if err:
+            return f"2x {err[0]} n'est pas valide"
+
+        calc.append(to_dec(el))
+    result = sum(calc)
+    return to_roman(result) if result < 4000 else \
+        ("Débordement, doit respecter la plage de I à "
+         "MMMCMXCIX inclus")
+\end{lstlisting}
+\medskip
+
+\subsubsection*{Notes sur les \textit{regexes} utilisées}
+Le \textit{regex} est un langage à part entière, il permet de chercher des occurrences plus ou moins complexes dans un bloc de texte. C'est grâce à la bibliothèque \texttt{re} que l'on peut l'intégrer facilement à \textit{Python}.
+\begin{verbatim}
+search("IL|IC|ID|IM|XD|XM|VL|VC|VD|VM", el)
+\end{verbatim}
+
+\texttt{search} cherche soit \texttt{IL}, \texttt{IC}, \texttt{ID}, \texttt{IM}... le caractère \og \texttt{$|$}\fg{} représente le \og \texttt{or}\fg{}.
+\medskip
+
+\begin{verbatim}
+search("V.*?V|L.*?L|D.*?D", el)
+\end{verbatim}
+\medskip
+
+Cela représente n'importe quel caractère (\texttt{*?} signifie \og \textit{jusqu'à}\fg{}. Donc de \texttt{V} jusqu'à \texttt{V}, ce qui permet d'indiquer que deux \texttt{V} peuvent être présents. De même à l'aide de \og or\fg{} pour chercher aussi deux \texttt{L} et deux \texttt{D}.
+\medskip
+
+\begin{verbatim}
+search(rf'([{"".join(list_romans[0:5:2])}])\1{{3,}}', el)
+\end{verbatim} ‎
+\medskip
+
+\texttt{list\_romans[0:5:2]} correspond à \texttt{["I", "X", "C"]}. On réalise  ici un \texttt{.join()}, ce qui nous donne \texttt{IXC}. Ce \texttt{IXC} est entre parenthèses car nous faisons ainsi un groupe qui enregistre le caractère trouvé entre \texttt{I} ou \texttt{X} ou \texttt{C}. Le \texttt{\textbackslash{}1} permet de récupérer ce groupe et recherche alors les deux mêmes caractères qui se suivent. \texttt{\{3,\}} veut dire : répéter au moins trois ou plus. Donc en tout, on cherche la répétition du même caractère quatre fois de suite (une fois dans le premier groupe, puis trois fois à l'aide de \texttt{\textbackslash{}1}).
+\medskip
+
+\begin{verbatim}
+search(rf'({"|".join(SPEC[4]+SPEC[9])}).*?\1', el)
+\end{verbatim}
+\medskip
+
+On cherche si \texttt{SPEC[4]} est dans \texttt{("IV", "XL", "CD")} ou si \texttt{SPEC[9]} est dans ("IX", "XC", "CM"), et s'ils sont présents deux fois. Pour information, le \texttt{r} avant le \texttt{f} du \textit{f-string} permet d'ignorer le caractère d'échappement \og \texttt{\textbackslash{}}\fg{}, car sans ce \texttt{r} il aurait fallu écrire \og \texttt{\textbackslash{}\textbackslash{}1}\fg{} plutôt que \og \texttt{\textbackslash{}1}\fg{}.
+\medskip
+
+\section{En complément}
+\begin{itemize}
+	\item[-] A noter deux vidéos existantes sur le sujet présentes sur \texttt{Youtube}: \textit{Convertir des nombres entiers en chiffres romains}\footnote{\url{https://www.youtube.com/watch?v=fD9aw0dZtjc}} et \textit{Convertir des chiffres romains en nombres entiers}\footnote{\url{https://www.youtube.com/watch?v=WFyrryNO9Nk}}.
+	\item[-] \textit{Comment vérifier si une liste est vide en Python ?}\footnote{\url{https://flexiple.com/python/check-if-list-is-empty-python}}
+\end{itemize}
+\medskip
+
