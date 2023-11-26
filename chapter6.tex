@@ -1,0 +1,376 @@
+\chapter{Cryptographie symétrique}
+\vspace{2cm}
+\section{Énoncé}
+Un peu d'encryptage pour vos communications privées !
+\medskip
+
+Le but de ce challenge est de développer un codeur/décodeur suivant la logique de la cryptographie symétrique\footnote{\url{https://fr.wikipedia.org/wiki/Cryptographie_sym\%C3\%A9trique}} qui utilise une clef numérique très simple pour chiffrer et déchiffrer.
+\medskip
+
+\subsection*{Étapes}
+\begin{enumerate}
+	\item Envoyer la phrase à chiffrer : \og \textit{Salut, je suis ici pour apprendre Python}\fg{} et la clef de codage est égale à \texttt{6}.
+	\medskip
+	
+	\item On remplace d'abord tous les espace par des \og \texttt{\_}\fg{}, ce qui nous donne alors la phrase : \og \textit{Salut,\_je\_suis\_ici\_pour\_apprendre\_Python}\fg{}.
+	\medskip
+	
+	\item Comme la clef est la valeur \texttt{6}, on découpe la phrase en lignes de six caractères, les cases manquantes sont comblées par des \og \texttt{*}\fg{}:
+	\begin{verbatim}
+	Salut,
+	_je_su
+	is_ici
+	_pour_
+	appren
+	dre_Py
+	thon**
+	\end{verbatim}
+	\medskip
+
+	\item On transpose en lisant le texte par colonne (de haut en bas et de gauche à droite), c'est-à-dire en suivant cet ordre :
+	\begin{verbatim}
+	1  8 15 22
+	2  9 16 23
+	3 10 17 24
+	4 11 18 25
+	5 12 19 26
+	6 13 20 27
+	7 14 21 28
+	\end{verbatim}
+\end{enumerate}
+\medskip
+
+La phrase chiffrée sera donc la suivante : \og \texttt{S\_i\_adtajspprhle\_opeou\_iur\_ntscreP
+*,ui\_ny*}\fg{}.
+\medskip
+
+Pour le décodage, il suffira de suivre les étapes dans le sens inverse...
+\medskip
+
+\subsection*{Conditions}
+\begin{itemize}
+	\item[-] L'affichage se fait via la console.
+	\item[-] La phrase a chiffrer est a envoyer en argument, accompagnée de sa clef au format \texttt{int}, le résultat doit retourner la phrase codée.
+	\item[-] Pour le décodeur, la phrase chiffrée est envoyée accompagnée de la clef, le résultat doit retourner la phrase en clair.
+	\item[-] La clef doit être la même pour un même chiffrage et déchiffrage.
+	\item[-] Vous êtes libre de coder en fonctionnel ou bien de constituer vos classes à l'aide de la POO.
+\end{itemize}
+\medskip
+
+\subsection*{Exemples}
+\textbf{\textbullet{} Chiffrage}
+\begin{itemize}
+	\item[-] \og \textit{Lorem ipsum dolor sit amet, consectetur adipiscing elit.}\fg{}, clef : \texttt{12} -> \texttt{Ldetnoot
+	ugrl,r\_eo\_\_emrcal\_\_odiisnitpisp.stei*u\_cs*matc*\_mei*}
+	\item[-] \og \textit{La première machine programmable a été réalisé en 1801.}\fg{}, clef : \texttt{3} -> \texttt{Lpmrmher
+	rmlatrlén8.arieai\_oaae\_ééi\_\_0*\_eè\_cnpgmb\_é\_ase11*}
+\end{itemize}
+\medskip
+
+\textbf{\textbullet{} Déchiffrage}
+\begin{itemize}
+	\item[-] \texttt{Lag\_eeelelm*\_l\_aa*ced\_i*hnesn*}, clef : \texttt{5} -> \og \textit{Le challenge de la semaine}\fg{}
+	\item[-] \texttt{dctigosrn*}, clef : \texttt{2} -> \og \textit{docstring}\fg{}
+\end{itemize}
+\medskip
+
+\section{Diverses solutions}
+\subsection*{Code de \textbf{\textit{@Arnadu}}}
+J'aimerais mettre en avant la meilleure façon d'aborder ce challenge. Et c'est le participant \textbf{\textit{@Arnadu}} qui l'a trouvé ! Après quelques étapes de \textit{refactoring}, voici le code résultant final que je trouve absolument brillant de simplicité et d'ingéniosité.
+\medskip
+
+\begin{lstlisting}
+def encode(sentence:str, key:int)->str:
+    sentence += "*"*(key - len(sentence) % key) \
+        if len(sentence) % key else ""
+    return "".join(sentence[i::key]
+                   for i in range(key)).replace(" ", "_")
+
+
+def decode(sentence_encrypt:str, key:int)->str:
+    cutter = len(sentence_encrypt)//key
+    return ("".join(sentence_encrypt[i::cutter]
+                   for i in range(cutter))
+            .replace("_", " ").rstrip("*"))
+
+
+sentences_to_encode = (
+    ("Lorem ipsum dolor sit amet, consectetur adipiscing "
+     "elit.", 12),
+    ("La première machine programmable a été réalisé en "
+     "1801.", 3)
+)
+
+sentences_to_decode = (
+    ("Lag_eeelelm*_l_aa*ced_i*hnesn*", 5),
+    ("dctigosrn*", 2)
+)
+
+for sentence, key in sentences_to_encode:
+    print(f"Sentence to encode : {sentence}")
+    print(f"Sentence encoded : {encode(sentence, key)}")
+
+for sentence, key in sentences_to_decode:
+    print(f"Sentence to decode : {sentence}")
+    print(f"Sentence decoded : {decode(sentence, key)}")
+\end{lstlisting}
+\medskip
+
+Pourquoi son code est excellent ? Car en une seule boucle, il a été capable de réaliser à la fois le découpage et la transposition de la phrase à coder ou à décoder :
+\begin{verbatim}
+...sentence[i::key] for i in range(key)
+\end{verbatim}
+\medskip
+
+On récupère donc chaque groupe de caractères à chaque découpage , pour chaque ligne en utilisant la boucle \texttt{for} et \texttt{range(key)} avec l'utilisation d'un pas : \texttt{[i::key]}.
+\medskip
+
+Ceci est valable aussi pour le décodage :
+\begin{verbatim}
+cutter = len(sentence_encrypt)//key
+...sentence_encrypt[i::cutter] for i in range(cutter)
+\end{verbatim}
+\medskip
+
+\subsection*{Le code de \textbf{\textit{@Hugo}}}
+Voici une autre solution intéressante avec Numpy en fonctionnel, que je trouve aussi très sympathique. C'est une version sur laquelle nous avons pas mal bossé avec \textbf{\textit{@Hugo}} :
+\begin{lstlisting}
+import numpy as np
+
+
+def init_matrix(sentence: str, key: int, decodage=False) \
+        -> str:
+    x, y = np.ceil(len(sentence)/key).astype(int), key
+    if decodage:
+        x, y = y, x
+
+    matrix = np.full((x, y), '*')
+    for i, c in enumerate(sentence):
+        matrix[i//y, i % y] = c
+    return ''.join(np.ravel(np.transpose(matrix)))
+
+
+def code(sentence: str, key: int) -> str:
+    return init_matrix(sentence, key).replace(' ','_')
+
+
+def decode(coded_sentence: str, key: int) -> str:
+    return (init_matrix(coded_sentence, key, True)
+            .replace('_', ' ').rstrip('*'))
+
+
+if __name__ == "__main__":
+    key = 6
+    print(decode(code("Salut, je suis ici pour apprendre "
+                      "Python", key), key))
+\end{lstlisting}
+\medskip
+
+\texttt{x} et \texttt{y} permettent de calculer la dimension de la matrice ; comme le chiffrage et le déchiffrage sont simplement l'inverse, cela peut se faire via une simple permutation des variables pour le décodage.
+\medskip
+
+Pour le reste, on initialise une matrice que l'on rempli au fur et à mesure avec la phrase à coder ou à décoder.
+\medskip
+
+Une transposition avec \texttt{transpose()} de \textit{Numpy} et \texttt{ravel()} pour aplatir la matrice dans le but d'afficher son contenu.
+\medskip
+
+\subsection*{Ma solution}
+Voici maintenant ma proposition que je vous laisse analyser et qui est une autre façon de faire avec quelques subtilités intéressantes au niveau du formatage avec \textit{f-string} et de l'utilisation de la fonction \texttt{zip()} :
+\begin{lstlisting}
+def encode(text: str, key: int)-> str:
+    t = [f"{text[i:i + key]:*<{key}}"
+         for i in range(0, len(text), key)]
+    return "".join("".join(el)
+                   for el in zip(*t)).replace(" ", "_")
+
+
+def decode(text: str, key: int)-> str:
+    row = len(text) // key
+    t = [text[i:i + row] for i in range(0, len(text), row)]
+    return ("".join("".join(el)
+                   for el in zip(*t)).rstrip("*").
+            replace("_", " "))
+
+
+key = 6
+print(decode(encode("Salut, je suis ici pour apprendre "
+                    "Python", key), key))
+\end{lstlisting}
+\medskip
+
+Ici, la phrase est découpée avec un \textit{pas} de \texttt{key} en utilisant \texttt{range(0, len(text), key)}, puis les caractères sont récupérés ligne par ligne entre l'\textit{index} et l'\textit{index} auquel on ajoute la valeur de \texttt{key}, grâce à \texttt{text[i:i + key]}.
+\medskip
+
+On procède ensuite à la transposition à l'aide de la fonction \texttt{zip()} et l'\textit{unpack} (la petite astérisque qui dispatche tous les éléments...) de la compréhension de liste issue de la ligne de code précédente. C'est à ce moment-là que les espaces sont remplacés par des \og \texttt{\_}\fg{}. À noter que pour compléter les espaces vides avec des astérisques, j'utilise ici le formatage à l'aide des \textit{f-string}\footnote{Pour plus d'information sur les \textit{f-string}: \url{https://he-arc.github.io/livre-python/fstrings/index.html}} qui permet de réaliser la fonction via  \texttt{:*<{key}}.
+\medskip
+
+Le décodage se fait de la même façon, dans le sens inverse.
+\medskip
+
+\subsection*{La solution de \textbf{\textit{@OsKaR31415}}}
+\og \textit{Voici ma solution avec le paradigme orienté objet :}
+\begin{lstlisting}
+import numpy as np
+from abc import ABC, abstractmethod
+
+
+def read_by_columns(str_array: np.ndarray[str]) -> str:
+    """Retourner une chaîne de caractère de tous les
+    caractères du tableau 2D, lus par colonnes.
+    Exemples:
+        >>> read_by_columns(np.array([["s", "u"],
+        ["a", "t"], ["l", "!"]]))
+        'salut!'
+    """
+    return ''.join(np.ravel(np.transpose(str_array)))
+
+class Codeur(ABC):
+    """Classe abstraite pour un objet qui encode ou décode
+    un texte avec une clef. Cette classe gère la
+    manipulation de la clef (initialisation, accesseur et
+    mutateur). Elle pose la nécessité de définir la méthode
+    `__call__` dans toutes les classes enfant.
+    """
+    def __init__(self, clef):
+        self.clef = clef
+
+    @property
+    def clef(self) -> int:
+        return self._clef
+
+    @clef.setter
+    def clef(self, valeur: int) -> None:
+        if not isinstance(valeur, int):
+            raise TypeError(f"La clef doit être un entier"
+                            f", pas un {type(valeur)}.")
+        self._clef = valeur
+
+    @abstractmethod
+    def __call__(self, texte: str) -> str:
+        """Une méthode abstraite n'est pas définie.
+        Elle sert à dire que toutes les classes filles
+        doivent définir cette méthode."""
+        ...
+
+
+class Encodeur(Codeur):
+    """Classe pour encoder du texte.
+    Puisqu'elle hérite de `Codeur`, il n'est pas nécessaire
+    de s'occuper de la gestion de l'attribut `clef`, ni de
+    définir le `__init__`."""
+    def __call__(self, texte: str) -> str:
+        # remplacement des espaces + ajout des "*" à la fin
+        texte = (texte.replace(' ', '_') +
+                 "*" * (self.clef - len(texte)
+                        % self.clef))
+        return read_by_columns(np.reshape(np.array(
+            list(texte)), (len(texte)//self.clef,
+                           self.clef)))
+
+class Decodeur(Codeur):
+    """Classe pour décoder du texte."""
+    def __call__(self, texte: str) -> str:
+        return (read_by_columns(np.reshape(np.array(
+            list(texte)), (self.clef, len(texte)//
+                           self.clef)))
+                .rstrip('*').replace('_', ' '))
+
+
+chiffrer = Encodeur(12)  # un encodeur avec la clef 12
+assert chiffrer("Lorem ipsum dolor sit amet, consectetur "
+                "adipiscing elit.") == ("Ldetnootugrl,r_e"
+                                        "o__emrcal__odii"
+                                        "snitpisp.stei*u_"
+                                        "cs*matc*_mei*")
+chiffrer.clef = 3  # on change la clef
+assert (chiffrer("La première machine programmable a été "
+                "réalisé en 1801.") ==
+        ("Lpmrmherrmlatrlén8.arieai_oaae_ééi__0*_eè_cnpg"
+         "mb_é_ase11*"))
+
+# on peut également définir le Codeur à la volée :
+assert (Decodeur(5)("Lag_eeelelm*_l_aa*ced_i*hnesn*") ==
+        "Le challenge de la semaine")
+
+# en définissant l'encodeur et le décodeur à la volée :
+texte = "un texte au hasard avec un * pour le piège"
+clef = 7
+assert Decodeur(clef)(Encodeur(clef)(texte)) == texte
+\end{lstlisting}
+\medskip
+
+\textit{J'ai choisi de faire des objets avec une clef fixée, mais qui peuvent encoder ou décoder n'importe quel texte. Les objets \texttt{Encode} et \texttt{Decode} sont en fait des sortes de fonctions (des \texttt{\_callable\_}) que l'on appelle avec comme argument un texte, et qui vont retourner le texte encodé ou décodé avec leur clef.}\fg{}
+\medskip
+
+\section[Quelques remarques sur les codes des participants]{Quelques remarques sur les codes des \newline participants au challenge, par \newline \textbf{\textit{@OsKaR31415}}}
+Quelques remarques sur les codes que j'ai vu :
+\medskip
+
+Parmi les solutions, certaines utilisaient parfois trois boucles, et beaucoup de calculs intermédiaires. C'est une bonne pratique de diviser un problème en petits sous-problèmes (\og \textit{diviser chacune des difficultés [...] en autant de parcelles qu'il se pourrait, et qu'il serait requis pour les mieux résoudre}\fg{} comme disait \textsc{Descartes}).
+\medskip
+
+Mais il ne faut pas en abuser : trop diviser son code pose problème. D'abord, cela ajoute de la complexité puisqu'il faut réunir les différentes parties divisées. Mais surtout, c'est problématique car on est souvent obligés, pour pouvoir le diviser, de rendre le problème plus complexe qu'il ne l'est.
+\medskip
+
+C'est une question de cacher le code (par exemple le mettre dans une fonction à part), ou bien de le subordonner (ne pas le séparer, mais faire en sorte que sa délimitation soit claire, avec des parenthèses ou des variables). Par exemple, \textbf{@bucdany} à tendance à faire des lignes plutôt longues car il est à l'aise avec le code subordonné : une compréhension de liste dans une fonction, suivie d'un \texttt{.replace}... Si on est habitué, c'est plus lisible qu'un code dans lequel chaque étape est séparée dans une fonction à part.
+\medskip
+
+J'ai vu plusieurs solutions utilisant la programmation orientée objet. C'est un paradigme très utile et pratique, mais il faut aussi comprendre sa logique. Par exemple, dans ce challenge, il fallait gérer un texte et une clef pour l'encodage et le décodage. Certaines solutions ont été de faire un objet qui contient un texte, et de proposer de (dé/en)coder ce texte avec n'importe quelle clef. Cela peut être utile dans certains contexte, mais généralement, il semble plus logique de choisir une clef une fois, et ensuite d'encoder plusieurs textes. Pour cela, mes classes ne stockent pas le texte, mais le transforment simplement.
+\medskip
+
+Il faut penser à ce genre d'enjeux lorsque l'on définit la structure de nos objets. Il faut aussi repérer les parties du code qui seront communes à plusieurs classes pour en faire une classe parente.
+\medskip
+
+Enfin, les classes abstraites peuvent être utiles lorsque l'on veut définir un \\
+\texttt{\_contrat\_}, c'est à dire une sorte de structure que toutes les classes filles d'une classe doivent respecter. Dans mon code, la classe \texttt{Codeur} est une classe abstraite (elle ne sert pas à créer des objets, mais d'autres classes peuvent hériter d'elle), et elle pose le contrat suivant : toutes les classes filles doivent contenir la méthode \texttt{\_\_call\_\_}.
+\medskip
+
+\section{Partie \textit{bonus} du challenge}
+Le mot clé n'est plus de type \texttt{int} mais de type \texttt{string} de \texttt{n} caractères. On prendra ici le mot clé de six caractères : \texttt{python}.
+\medskip
+
+\subsection*{Étapes}
+\begin{enumerate}
+	\item On fera alors bien correspondre chaque lettre de ce dernier, à notre phrase à coder que l'on découpera en \texttt{n} caractères (la longueur de notre mot clé) de cette manière :
+	\begin{verbatim}
+p y t h o n
+S a l u t ,
+_ j e _ s u
+i s _ i c i
+_ p o u r _
+a p p r e n
+d r e _ P y
+t h o n * *
+	\end{verbatim}
+	\medskip
+	
+	\item On range ensuite chaque lettre du mot clé par ordre alphabétique : \texttt{h n o p t y}. Chaque lettre de la phrase à coder sera alors mélangée de sorte qu'elle suive toujours sa correspondance avec la lettre du mot clé qui lui a été associée dans la phase précédente. On aura donc ce résultat :
+	\begin{verbatim}
+h n o p t y
+u , t S l a
+_ u s _ e j
+i i c i _ s
+u _ r _ o p
+r n e a p p
+_ y P d e r
+n * * t o h
+	\end{verbatim}
+	\medskip
+	
+	\item Pour finir, on lira le tout par colonne (en veillant bien sûr à enlever du traitement, la première ligne, c'est-à-dire, notre mot clé) pour obtenir la phrase codée suivante :
+	\begin{verbatim}	 u_iur_n,ui_ny*tscreP*S_i_adtle_opeoajspprh
+	\end{verbatim}
+\end{enumerate}
+\medskip
+
+Bien sûr, je vous invite à créer une méthode de décodage en repassant toutes les étapes dans l'ordre inverse...
+\medskip
+
+Là, ça devient un algorithme de cryptage plutôt intéressant et vraiment pas facile à décoder sans la clé !
+\medskip
+
+\textbf{NOTA}: Afin d'éviter d'avoir des problèmes au décodage, je vous invite à faire vos tests en veillant à ne pas choisir un mot clé qui possède des récurrences dans sa constitution : par exemple, pour le mot clé : \texttt{"probleme"}, les deux \texttt{"e"} contenus dans ce mot peuvent être rangés dans un ordre alphabétique différent, laissant alors deux résultats possibles...
+\medskip
+
+Bonne chance !
