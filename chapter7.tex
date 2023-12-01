@@ -1,0 +1,617 @@
+\chapter{Extraction des données}
+\vspace{2cm}
+\section{Énoncé}
+Aie ! Je ne retrouve plus ma liste de contact !
+\medskip
+
+Le but de ce challenge est d'extraire les noms, prénoms, téléphones et emails à partir d'un paragraphe, puis de créer une base de données afin de les afficher clairement à l'écran.
+\medskip
+
+\subsection*{Étapes}
+\begin{enumerate}
+	\item Trouver le moyen de repérer les différentes limites d'extractions.
+	\item Ranger les données dans une base de données en suivant cet ordre : \texttt{Nom \& Prénom} - \texttt{Mail} - \texttt{Numéro}.
+	\item Afficher le résultat formaté.
+\end{enumerate}
+\medskip
+
+\subsection*{Conditions}
+\begin{itemize}
+	\item[-] L'affichage se fait via la console.
+	\item[-] Vous êtes libre d'utiliser (ou pas) toutes les librairies de votre choix.
+	\item[-] Vous pouvez coder votre programme aussi bien en fonctionnel qu'en orienté objet.
+	\item[-] L'affichage des données doit respecter le format visuel suivant (voir ci-dessous dans résultat).
+	\item[-] Utilisez les trois paragraphes ci-dessous pour procéder à l'extraction.
+\end{itemize}
+\medskip
+
+\subsection*{Texte dans lequel extraire les données}
+{\itshape Récemment, j'ai eu l'opportunité de rencontrer des entrepreneurs exceptionnels lors d'une conférence. Par exemple, j'ai été inspiré par l'histoire de M. Thomas Bernard, qui a démarré sa propre entreprise dans la Silicon Valley. Vous pouvez le contacter à l'adresse email \texttt{thomas.b@alphamail.com} ou au numéro suivant +33 1 12 34 56 78. Une autre personne fascinante était Mme Claire Martin, la fondatrice d'une startup technologique innovante. Elle est joignable à \texttt{cmartin@betainbox.org}, son numéro de téléphone est le 09 01 23 45 67. Ensuite, il y avait monsieur Lucas Petit, un innovateur dans le domaine de la construction durable, contactable à \texttt{lp@experimentalpost.net}, son téléphone est le 0890 12 34 56.}
+\medskip
+
+{\itshape En parcourant mon ancien annuaire, je suis tombé sur quelques contacts intéressants. Par exemple, j'ai redécouvert le contact de Mlle Sophie Martin. Son numéro de téléphone est 07 89 01 23 45, et elle est facilement joignable à l'adresse \texttt{sophie@prototypemail.com}. Un autre contact noté était celui du Dr Lucas Dupont. Je me souviens avoir eu plusieurs discussions avec lui. Son numéro est 06 78 90 12 34 et son mail est \texttt{drdupont@randominbox.org}. C'est fascinant de voir comment certains contacts peuvent rapidement nous rappeler des souvenirs passés.}
+\medskip
+
+{\itshape Lors de notre dernière réunion, Madame Jennifer Laroche, joignable au 05.67.890. 123 ou par e-mail à \texttt{laroche@trialmail.net}, a exprimé sa satisfaction concernant les avancées du projet. Elle a insisté sur la pertinence du feedback fourni par M. Sébastien Girard, qui peut être contacté au 0456789012 ou par email à \texttt{sebastieng@demomail.org}. De plus, notre consultante externe, mademoiselle Chloé Lefebvre, dont le numéro est le 03.45.67.89.01 et l'e-mail est \texttt{lefebvre\_chloe@testinbox.net}, a fourni un rapport détaillé qui a été bien reçu par l'équipe.}
+\medskip
+
+\subsection*{Résultat en sortie de console}
+\medskip
+
+\begin{verbatim}
+|   Nom & Prénom   |             Mail             |      Numéro      |
+|------------------|------------------------------|------------------|
+| Thomas Bernard   | thomas.b@alphamail.com       | 33.1.12.34.56.78 |
+| Claire Martin    | cmartin@betainbox.org        | 09.01.23.45.67   |
+| Lucas Petit      | lp@experimentalpost.net      | 08.90.12.34.56   |
+| Sophie Martin    | sophie@prototypemail.com     | 07.89.01.23.45   |
+| Lucas Dupont     | drdupont@randominbox.org     | 06.78.90.12.34   |
+| Jennifer Laroche | laroche@trialmail.net        | 05.67.89.01.23   |
+| Sébastien Girard | sebastieng@demomail.org      | 04.56.78.90.12   |
+| Chloé Lefebvre   | lefebvre_chloe@testinbox.net | 03.45.67.89.01   |
+|------------------|------------------------------|------------------|
+\end{verbatim}
+\medskip
+
+\section{Diverses solutions}
+\subsection*{Le code de \textit{@Krystof26}}
+Je vous présente maintenant un des meilleurs code des participants sur lequel nous avons pas mal travaillé. \textbf{\textit{@Krystof26}} a proposé une belle solution que nous avons refactorisé et optimisé ensemble :
+\begin{lstlisting}
+class ExtractContacts:
+    MR_AND_MRS = ("M.", "Mme", "monsieur", "Mlle",
+                  "Dr", "Madame", "mademoiselle")
+    DB_KEYS = ("Nom & Prénom", "Mail", "Numéro")
+    CODE_ZERO = "0"  # usage numéro en national
+
+    def __init__(self, file):
+        # Création de la base de données sous forme d'un
+        # dictionnaire :
+        self._all_contacts = (
+            ExtractContacts._extract_all_datas(
+                ExtractContacts._extract_txt(file)))
+
+    @staticmethod
+    def _extract_txt(file) -> str:
+        """Extraction du contenu du fichier texte sous forme
+        de chaîne de caractères"""
+        with open(file, "r", encoding="utf-8") as textfile:
+            return textfile.read()
+
+    @staticmethod
+    def _format_phone_number(number: str) -> str:
+        """Formatage selon que le numéro de téléphone
+        comporte 11 ou 10 chiffres."""
+        match number[0]:
+            case ExtractContacts.CODE_ZERO:
+                # 10 chiffres : 0x.xx.xx.xx.xx (usage
+                # en national)
+                return ".".join(number[i:i + 2] for i in
+                                range(0, len(number), 2))
+            case _:  # 11 chiffres: xx.x.xx.xx.xx.xx
+                # (usage en international)
+                return (f"{number[0:2]}.{number[2]}." + ".".
+                        join(number[i:i + 2] for i in
+                             range(3, len(number), 2)))
+
+    @staticmethod
+    def _extract_all_datas(text: str) -> dict:
+        """Extraction des données : listes de nom, de mails,
+        de numéros de téléphone dans un dictionnaire."""
+        bdd = {key: [] for key in ExtractContacts.DB_KEYS}
+
+        for index, word in enumerate(text.split()):
+            if word in ExtractContacts.MR_AND_MRS:
+                # Pour les noms
+                bdd[ExtractContacts.DB_KEYS[0]].append(
+                    ' '.join(text.split()[
+                             index + 1:index + 3])[:-1])
+            elif "@" in word:  # Pour les mails
+                bdd[ExtractContacts.DB_KEYS[1]].append(
+                    word.rstrip('.').rstrip(','))
+
+        # Pour les numéros de téléphone :
+        list_numbers = [n for n in text if n.isdigit()]
+        while list_numbers:
+            term_index = 10 if (list_numbers[0] ==
+                                ExtractContacts.CODE_ZERO) \
+                else 11
+            bdd[ExtractContacts.DB_KEYS[2]].append(
+                ExtractContacts._format_phone_number(
+                    "".join(list_numbers[:term_index])))
+            list_numbers = list_numbers[term_index:]
+        return bdd
+
+    def __str__(self):
+        longest = [len(max(c, key=len))+2 for c in
+                   self._all_contacts.values()]
+
+        # Création des diverses 'strings' nécessaires à la
+        # construction du tableau de données :
+        line_str = "\n|" + "".join(f"{'-' * long}|"
+                                   for long in longest)
+        header = "\n|" + "".join(f"{key_db:^{long}}|"
+                                 for key_db, long in
+                                 zip(ExtractContacts.DB_KEYS,
+                                     longest))
+        contacts = "\n|" + "\n|".join("".join(
+            f" {contact:<{long-1}}|" for contact,
+            long in zip(infos, longest)) for infos
+                                      in zip(
+            *self._all_contacts.values()))
+        # Tableau complet avec les données :
+        return "".join(t + line_str 
+                       for t in [header, contacts])
+
+
+if __name__ == '__main__':
+    print(ExtractContacts("text.txt"))
+\end{lstlisting}
+\medskip
+
+Son code est très propre, clair et esthétique. Il n'a pas utilisé les \textit{regexes} ce qui fait que son programme demande juste un tout petit peu plus de logique, mais cela est fort bien structuré en une classe et quatre méthodes.
+\medskip
+
+\subsection*{Ma solution}
+Voici ma proposition qui comprend une version avec \textit{regex} et l'autre sans :
+\begin{lstlisting}
+from re import compile
+
+FILE = "data.txt"
+TITLE = ("Nom & Prénom", "Mail", "Numéro")
+PREFIX = ("monsieur", "Madame", "mademoiselle",
+          "Mme", "Mlle", "M.", "Dr")
+REGEX = (compile(r) for r in (
+             r'(?:monsieur|Madame|mademoiselle|Mme|Mlle|M.'
+             r'|Dr)\s((?:[A-Z]\w+\s?){2})',
+             r'[\w.]+@\w+\.\w{2,}',
+             r'[+0]\d+'))
+
+
+def printl(func):
+    def wrapper(*args):
+        result = func(*args)
+        print("|" + result)
+        return result
+    return wrapper
+
+
+def get_text(file: str) -> str:
+    with open(file, encoding="utf8") as f_content:
+        return f_content.read()
+
+
+def format_tel(tel: str) -> str:
+    tel_ = ("".join(tel[i:i+2] + "."
+                   for i in range(0, len(tel), 2)).
+            rstrip("."))
+    return tel_[1:2] + tel_[3:1:-1] + tel_[4:] \
+        if tel_.startswith("+") else tel_
+
+
+def extract_regex(txt: str) -> dict:
+    return {t: next(REGEX).findall(txt) if i < 2 else \
+               list(map(format_tel, next(REGEX).findall(
+                   "".join(t for t in txt
+                           if t not in " .")))) \
+            for i, t in enumerate(TITLE)}
+
+
+def extract_no_regex(txt: str) -> dict:
+    bdd = {k: [] for k in TITLE}
+
+    txt_ = "".join(t for i, t in enumerate(txt)
+                   if t not in " ."
+                   or not txt[i-1].isdigit()).split()
+    for j, l in enumerate(txt_):
+        if l in PREFIX:
+            bdd[TITLE[0]].append(" ".join(
+                txt_[j+1:j+3])[:-1])
+        elif "@" in l:
+            bdd[TITLE[1]].append(
+                l.rstrip(",").rstrip("."))
+        elif any(n.isdigit() for n in l):
+            bdd[TITLE[2]].append(
+                format_tel(l[:12]
+                           if l.startswith("+")
+                           else l[:10]))
+    return bdd
+
+
+@printl
+def t_title(*args):
+    return "".join(f'{t:^{length}}|'
+                   for t, length in zip(TITLE, args[0]))
+
+
+@printl
+def t_sep_line(*args):
+    return "".join(f'{"-"*length}|' for length in args[0])
+
+
+@printl
+def t_content(*args):
+    return "\n|".join("".join(f" {el:<{length-1}}|"
+                              for el, length
+                              in zip(el_, args[0]))
+                      for el_ in zip(*args[1].values()))
+
+
+def show(bdd: dict) -> None:
+    length = [len(max(bdd, key=len))+2 
+              for bdd in bdd.values()]
+
+    for text_function in [t_title, t_content]:
+        text_function(length, bdd)
+        t_sep_line(length)
+
+
+if __name__ == "__main__":
+    DATA = get_text(FILE)
+
+    show(extract_regex(DATA))
+    show(extract_no_regex(DATA))
+\end{lstlisting}
+\medskip
+
+\section{Explication du code}
+Il y a beaucoup de chose à dire ici, on va donc procéder étape par étape.
+\medskip
+
+\subsection*{Contexte}
+Il s'agit de trouver le moyen d'extraire les données \texttt{nom}, \texttt{prénom}, \texttt{mail} et \texttt{téléphone} présentes dans un paragraphe, les stoker temporairement et les formater pour les afficher dans un tableau structuré. 
+\medskip
+
+\subsection*{Différentes problématiques}
+\textbf{\textbullet{} Extraction des données}
+\medskip
+
+Il y a plusieurs façons de s'y prendre, soit à l'aide des \textit{regexes} ou soit dans une logique \textit{builtin} de \textit{Python} grâce à quelques boucles et un peu de logique.
+\medskip
+
+\textbf{\textbullet{} Sans regex}
+\medskip
+
+Tout se passe dans la fonction : 
+\begin{verbatim}
+extract_no_regex(txt: str) -> dict}
+\end{verbatim}
+\medskip
+
+On déclare déjà le moyen de stockage des données à l'aide d'un dictionnaire (\texttt{bdd}) qui contiendra les clefs : \texttt{"Nom \& Prénom"}, \texttt{"Mail"}, \texttt{"Numéro"}.
+\begin{lstlisting}
+bdd = {k: [] for k in TITLE}
+\end{lstlisting}
+\medskip
+
+L'idée est de tout d'abord nettoyer les données pour permettre d'avoir des choses homogènes. Les numéros de téléphones sont en effet dans des formats très exotiques avec des points, des espaces et au nombre de chiffres différents en fonction d'un numéro contenant le préfixe international ou pas.
+\medskip
+
+Toutes les extractions sont centrées dans une seule boucle : \texttt{for j, l in enumerate(txt\_)}.
+\medskip
+
+Les \texttt{noms} et \texttt{prénoms} sont extraits au travers de cette condition :
+\begin{lstlisting}
+if l in PREFIX:
+  bdd[TITLE[0]].append(" ".join(txt_[j+1:j+3])[:-1])
+\end{lstlisting}
+\medskip
+
+Si l'on trouve un \texttt{PREFIX} tel que \texttt{"monsieur"}, \texttt{"Madame"}, \texttt{"mademoiselle"}, \texttt{"Mme"}, \texttt{"Mlle"}, \texttt{"M."} ou \texttt{"Dr"} alors on récupère les deux mots suivants que sont \texttt{nom} et \texttt{prénom}.
+\medskip
+
+Les \texttt{emails} sont extraits en cherchant un \texttt{"@"} :
+\begin{lstlisting}
+elif "@" in l:
+  bdd[TITLE[1]].append(l.rstrip(",").rstrip("."))
+\end{lstlisting}
+\medskip
+
+De plus on nettoie le dernier caractère qui peut contenir un point ou une virgule.
+\medskip
+
+Pour finir, l'extraction des \texttt{numéros de téléphone} se fait via :
+\begin{lstlisting}
+elif any(n.isdigit() for n in l):
+  bdd[TITLE[2]].append(format_tel(l[:12] if l.startswith("+") 
+  	else l[:10]))
+\end{lstlisting}
+\medskip
+
+On cherche une chaîne de caractères contenant au moins un chiffre avec la fonction \texttt{any()} puis on récupère douze éléments s'il y a un \texttt{"+"} ou bien seulement dix chiffres.
+\medskip
+
+Notez qu'au préalable que les données sont nettoyées en enlevant les points et les espaces entre les séries de chiffres des numéros de téléphone par cette condition :
+\begin{lstlisting}
+...if t not in " ." or not txt[i-1].isdigit()...
+\end{lstlisting}
+\medskip
+
+\textbf{\textbullet{} Au moyen des \textit{regexes}}
+\medskip
+
+Je vous invite à tester vos \textit{regex} via ce site, sans oublier de cocher Python (à gauche) : \url{https://regex101.com/}.
+\medskip
+
+La fonction qui permet de prendre en compte les \textit{regex} se trouve ici, en une seule ligne \texttt{return} :
+\begin{lstlisting}
+def extract_regex(txt: str)-> dict:
+    return {t: next(REGEX).findall(txt) if i < 2 else \
+               list(map(format_tel, next(REGEX).findall(
+               "".join(t for t in txt if t not in " .")))) \
+            for i, t in enumerate(TITLE)}
+\end{lstlisting}
+\medskip
+
+Les \textit{regex} sont tout d'abord compilées puis utilisées avec \texttt{re.findall()} afin de pouvoir tout extraire d'un coup et éviter de surcharger le code de boucles inutiles.
+\medskip
+
+La compilation\footnote{Pour plus d'information sur la compilation des regex : \url{https://pynative.com/python-regex-compile/}} se fait directement à la déclaration des constantes, via l'utilisation d'un simple générateur :
+\begin{lstlisting}
+REGEX = (compile(r) for r in (
+             r'(?:monsieur|Madame|mademoiselle|Mme|Mlle|M.'
+             r'|Dr)\s((?:[A-Z]\w+\s?){2})',
+             r'[\w.]+@\w+\.\w{2,}',
+             r'[+0]\d+'))
+\end{lstlisting}
+\medskip
+
+Les \texttt{noms et prénoms} sont extraits par cette \textit{regex} :
+\begin{verbatim}
+r'(?:monsieur|Madame|mademoiselle|Mme|Mlle|M.|Dr)\s((?:[A-Z]\w+\s?){2})'
+\end{verbatim}
+\medskip
+
+\begin{itemize}
+	\item[-] Un premier bloc qui me permet de chercher la civilité de la personne :
+	\begin{verbatim}
+	(?:monsieur|Madame|mademoiselle|Mme|Mlle|M.|Dr)
+	\end{verbatim}
+	Notez le \texttt{?:} qui permet d'utiliser des parenthèses associatives sans en extraire le contenu. Ainsi le résultat de la recherche n'enverra pas ces données.
+	\medskip
+	
+	\item[-] Le \texttt{\textbackslash{}s} pour chercher une espace.
+	\medskip
+	
+	\item[-] Un jeu de parenthèses pour permettre d'extraire proprement les données et d'éviter aussi des répétitions dans la \textit{regex} :
+	\begin{verbatim}
+	((?:[A-Z]\w+\s?){2})
+	\end{verbatim}	
+\end{itemize}
+\medskip
+
+Ainsi, on cherche ici ce pattern : 
+\begin{verbatim}
+A-Z]\w+\s?){2}
+\end{verbatim}
+qui est donc répété deux fois via \texttt{{2}}. Notez encore un \texttt{?} qui permet de définir le caractère optionnel espace noté \texttt{\textbackslash{}s} qui est présent entre les noms et prénoms mais pas à la fin de la chaîne à extraire, cela devient donc facultatif.
+\medskip
+
+Avec \texttt{[A-Z]} on cherche une majuscule puis un mot avec \texttt{\textbackslash{}w+} et finalement une espace avec \texttt{\textbackslash{}s}. Encore une fois le \texttt{?:} permet d'éviter d'avoir des doublons dans le résultat de la \textit{regex}.
+\medskip
+
+Les \texttt{emails} sont extraits grâce à cette \textit{regex} :.
+\begin{verbatim}
+r'[\w.]+@\w+\.\w{2,}'
+\end{verbatim}
+\medskip
+
+On cherche :
+\begin{itemize}
+	\item[-] Un mot pouvant contenir un point.
+	\item[-] Le caractère \texttt{"@"}.
+	\item[-] Un autre mot derrière.
+	\item[-] Un point.
+	\item[-] Un mot de deux lettres minimum pour l'extension de l'adresse \texttt{mail}.
+\end{itemize}
+\medskip
+
+Pour finir l'extraction des \textbf{numéros de téléphone} se fait via cette \textit{regex} :
+\begin{verbatim}
+r'[+0]\d+'
+\end{verbatim}
+\medskip
+
+\begin{itemize}
+	\item[-] On cherche le signe \texttt{"+"} ou le chiffre \texttt{"0"} \texttt{[+0]}.
+	\item[-] Suivi de plusieurs chiffres \texttt{\textbackslash{}d+}.
+\end{itemize}
+\medskip
+
+Au niveau du code dans mon \texttt{return}, j'utilise la fonction \texttt{next()} qui me permet d'incrément le pointeur du générateur et passer à la \textit{regex} suivante.
+Ainsi mes deux premières extractions se font via : \texttt{next(REGEX).findall(txt)}. La dernière, elle, pour les numéros de téléphone se pose sur le texte nettoyé des points et des virgules, grâce à cette boucle :
+\begin{verbatim}
+"".join(t for t in txt if t not in " .")
+\end{verbatim}
+\medskip
+
+\subsection*{Stokage temporaire des données}
+Avec ou sans \textit{regex}, les fonctions d'extraction retournent toutes les deux un dictionnaire contenant les données suivantes :
+\begin{verbatim}
+{'Mail': ['thomas.b@alphamail.com',
+          'cmartin@betainbox.org',
+          'lp@experimentalpost.net',
+          'sophie@prototypemail.com',
+          'drdupont@randominbox.org',
+          'laroche@trialmail.net',
+          'sebastieng@demomail.org',
+          'lefebvre_chloe@testinbox.net'],
+ 'Nom & Prénom': ['Thomas Bernard',
+                  'Claire Martin',
+                  'Lucas Petit',
+                  'Sophie Martin',
+                  'Lucas Dupont',
+                  'Jennifer Laroche',
+                  'Sébastien Girard',
+                  'Chloé Lefebvre'],
+ 'Numéro': ['33.1.12.34.56.78',
+            '09.01.23.45.67',
+            '08.90.12.34.56',
+            '07.89.01.23.45',
+            '06.78.90.12.34',
+            '05.67.89.01.23',
+            '04.56.78.90.12',
+            '03.45.67.89.01']}
+\end{verbatim}
+\medskip
+
+\subsection*{Formatage des données}
+Les données des numéros téléphoniques sont à reformatées afin de respecter l'énoncer et c'est par l'appel de cette fonction que ça se passe :
+\begin{lstlisting}
+def format_tel(tel: str) -> str:
+    tel_ = ("".join(tel[i:i+2] + "."
+                   for i in range(0, len(tel), 2)).
+            rstrip("."))
+    return tel_[1:2] + tel_[3:1:-1] + tel_[4:] \
+        if tel_.startswith("+") else tel_
+\end{lstlisting}
+\medskip
+
+Les numéros sont tout d'abord formatées dans un premier temps pour les numéros nationaux commençant par \texttt{0} :
+\begin{lstlisting}
+tel_ = ("".join(tel[i:i+2] + "."
+                for i in range(0, len(tel), 2)).rstrip("."))
+\end{lstlisting}
+\medskip
+
+On ajoute d'abord un point tous les deux chiffres pour formater un numéro national.
+\medskip
+
+Quant aux numéraux internationaux (commençant par le symbole \texttt{"+"}) alors on doit intervertir un point et un chiffre : \texttt{tel\_[3:1:-1]}. En d'autres termes, transformer ce format \texttt{+3.31.12.34.56.78} en celui-ci \texttt{33.1.12.34.56.78}.
+\medskip
+
+\subsection*{Affichage}
+Là, c'est une grosse partie et je voudrais pour cela vous présenter, dans un but pédagogique, un peu les décorateurs qui ont leur importance en Python.
+\medskip
+
+L'affichage est géré par la fonction \texttt{show(bdd: dict)-> None} qui fait appel à trois autres fonctions, chacune décorée de \texttt{@printl} :
+\begin{lstlisting}
+def printl(func):
+    def wrapper(*args):
+        result = func(*args)
+        print("|" + result)
+        return result
+    return wrapper
+
+...
+
+@printl
+def t_title(*args):
+    return "".join(f'{t:^{length}}|'
+                   for t, length in zip(TITLE, args[0]))
+
+
+@printl
+def t_sep_line(*args):
+    return "".join(f'{"-"*length}|' for length in args[0])
+
+
+@printl
+def t_content(*args):
+    return "\n|".join("".join(f" {el:<{length-1}}|"
+                              for el, length
+                              in zip(el_, args[0]))
+                      for el_ in zip(*args[1].values()))
+\end{lstlisting}
+\medskip
+
+En termes simples, un décorateur permet d'encapsuler une fonction, qu'il prend en paramètre, pour intégrer d'autres actions autour d'elle.
+\begin{lstlisting}
+def printl(func):
+    def wrapper(*args):
+        result = func(*args)
+        print("|" + result)
+        return result
+    return wrapper
+\end{lstlisting}
+\medskip
+
+Ici, je fais un \texttt{print("|" + result)}, cela me permet de simplifier la fonction \texttt{show()} et les formatages des contenus du tableau.
+\medskip
+
+\texttt{*args} permet de récupérer les arguments de la fonction et si besoin de les utiliser dans le décorateur. Ici j'affiche ce que me renvoi la fonction en ajoutant un \texttt{"|"} au début.
+\medskip
+
+Pour ajouter un décorateur, il suffit d'ajouter une ligne au-dessus de la fonction à décorer, Python s'occupe ensuite du reste.
+\begin{lstlisting}
+@printl
+def t_title(*args):
+    return "".join(f'{t:^{length}}|'
+                   for t, length in zip(TITLE, args[0]))
+\end{lstlisting}
+\medskip
+
+L'appel de cette fonction fait donc au final cela :
+\begin{lstlisting}
+print("|" + "".join(f'{t:^{length}}|' 
+                    for t, length in zip(TITLE, args[0])))
+\end{lstlisting}
+\medskip
+
+Ce serait donc équivalent à cela sans le décorateur :
+\begin{lstlisting}
+def t_title(length:list)-> None:
+    print("|" + "".join(f'{t:^{l}}|' 
+        for t, l in zip(TITLE, length)))
+\end{lstlisting}
+\medskip
+
+Au passage, cette fonction réunie les titres avec la taille des colonnes grâce à la fonction \texttt{zip()} puis on centre le tout avec les fonctions de formatage de \textit{f-string}\footnote{Pour plus d'informations sur les \textit{f-strings}: \url{https://discord.com/channels/396825382009044994/1155460501409628230}} et \texttt{:\^} (pour centrer).
+\medskip
+
+La deuxième fonction pour les lignes de séparation fonctionne de la même façon :
+\begin{lstlisting}
+@printl
+def t_sep_line(*args):
+    return "".join(f'{"-"*length}|' for length in args[0])
+\end{lstlisting}
+\medskip
+
+On affiche des \texttt{"-"} que l'on multiplie en fonction de la taille des colonnes.
+\medskip
+
+Pour finir le contenu du tableau se fait par l'intermédiaire de deux boucles et pour le coup deux fois \texttt{zip()} (oui j'aime beaucoup les \texttt{zip()}) :
+\begin{lstlisting}
+@printl
+def t_content(*args):
+    return "\n|".join("".join(f" {el:<{length-1}}|"
+                              for el, length
+                              in zip(el_, args[0]))
+                      for el_ in zip(*args[1].values()))
+\end{lstlisting}
+\medskip
+
+\begin{itemize}
+	\item[-] La première boucle \texttt{for el\_ in zip(*args[1].values())} permet de lire chaque ligne du contenu du tableau en rangeant les données par personne.
+	\item[-] La deuxième permet, comme dans la fonction des titres, de créer un tuple pour associer les tailles de colonnes du tableau.
+	\item[-] Le formatage permet d'aligner à gauche (\texttt{:<}) et ajoute des espaces pour formater les données correctement dans les colonnes.
+\end{itemize}
+\medskip
+
+Pour revenir à la fonction \texttt{show()} :
+\begin{lstlisting}
+def show(bdd: dict)-> None:
+    length = [len(max(bdd, key = len))+2 
+              for bdd in bdd.values()]
+
+    for text_function in [t_title, t_content]:
+        text_function(length, bdd)
+        t_sep_line(length)
+\end{lstlisting}
+\medskip
+
+La taille de chaque colonne est calculée par l'intermédiaire de \texttt{max(..., key = len)} qui est très pratique pour éviter de faire encore des boucles. Ainsi l'élément de la liste de taille la plus longue est alors directement renvoyée... C'est la fonction \texttt{len()} qui permet de récupérer la taille en question sous forme d'un \texttt{int}. \texttt{length} est donc une liste contenant la taille de chaque colonne du tableau.
+\medskip
+
+Cette dernière fonctionnalité est un peu bonus pour éviter les répétitions de la ligne séparatrice du tableau :
+\begin{lstlisting}
+    for text_function in [t_title, t_content]:
+        text_function(length, bdd)
+        t_sep_line(length)
+\end{lstlisting}
+\medskip
+
+J'itère donc sur les deux types d'éléments à ajouter dans le tableau : \texttt{t\_title} et \texttt{t\_content}, qui sont appelés avec les arguments \texttt{length} et \texttt{bdd}.
+\medskip
+
+Puis après chaque type d'élément du tableau, une ligne séparatrice est ajoutée : \texttt{t\_line()}.
+\medskip
